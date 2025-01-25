@@ -62,31 +62,42 @@ void loop() {
   B = pulseIn(OUT, LOW);  // Reading the Blue frequency
   delay(100);
 
-  // Print RGB Sensor Values
-  Serial.print("R= ");
-  Serial.print(R);
-  Serial.print(" | ");
-  Serial.print("G= ");
-  Serial.print(G);
-  Serial.print(" | ");
-  Serial.print("B= ");
-  Serial.println(B);
+  // Calculate total brightness (sum of RGB values)
+  int totalBrightness = R + G + B;
 
-  // Detect colors based on RGB values and print the result
-  if (R > 250 && G > 250 && B > 250 && R < 350 && G < 350 && B < 350) {
-    Serial.println("Detected Color: WHITE");
-  } else if (R > 2100 && G > 2050 && B > 1650 && R < 2200 && G < 2150 && B < 1750) {
-    Serial.println("Detected Color: BLACK");
-  } else if (R > 200 && G > 400 && B > 800 && R < 300 && G < 550 && B < 950) {
+  // Avoid division by zero
+  if (totalBrightness == 0) {
+    totalBrightness = 1;
+  }
+
+  // Normalize RGB values based on total brightness
+  float normalizedR = (float)R / totalBrightness;
+  float normalizedG = (float)G / totalBrightness;
+  float normalizedB = (float)B / totalBrightness;
+
+  // Print normalized RGB values to Serial Monitor
+  Serial.print("Normalized R: ");
+  Serial.print(normalizedR, 3); // Print up to 3 decimal places
+  Serial.print(" | Normalized G: ");
+  Serial.print(normalizedG, 3);
+  Serial.print(" | Normalized B: ");
+  Serial.println(normalizedB, 3);
+
+  // Detect colors based on normalized RGB ratios
+  if (normalizedR > 0.3 && normalizedG > 0.3 && normalizedB < 0.2) {
     Serial.println("Detected Color: YELLOW");
-    
+
     // Move servo to 90 degrees if yellow is detected
     myServo.write(90);
     delay(1000);  // Hold position for 1 second
     myServo.write(0);  // Reset servo to 0 degrees
-  } else if (R > 250 && G > 1250 && B > 950 && R < 350 && G < 1350 && B < 1050) {
+  } else if (normalizedR > 0.8 && normalizedG > 0.8 && normalizedB > 0.8) {
+    Serial.println("Detected Color: WHITE");
+  } else if (normalizedR < 0.1 && normalizedG < 0.1 && normalizedB < 0.1) {
+    Serial.println("Detected Color: BLACK");
+  } else if (normalizedR > 0.4 && normalizedG < 0.2 && normalizedB < 0.2) {
     Serial.println("Detected Color: RED");
-  } else if (R > 1250 && G > 800 && B > 450 && R < 1350 && G < 900 && B < 550) {
+  } else if (normalizedB > normalizedR && normalizedB > normalizedG) {
     Serial.println("Detected Color: BLUE");
   } else {
     Serial.println("Detected Color: UNKNOWN");
